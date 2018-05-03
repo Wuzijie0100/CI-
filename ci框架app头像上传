@@ -1,0 +1,54 @@
+	CONTROLLER
+  /*个人头像修改*/
+    public function Modifypicture(){
+    	// 获取调用接口传过来的数据 ，安卓可以多传一个图片扩展名（参数）；
+    	$inputStr = file_get_contents('php://input');
+    	parse_str($inputStr);
+    	// if($mobile[0] == ''){
+    	// 	$arr = ["status" => "100000","msg" => "电话号码不能为空"];
+    	// }else
+    	// if($header_picture_url[1] == ''){
+    	// 	$arr = ["status" => "100007","msg" => "头像不能为空"];
+    	// }else{
+    	// print_r(parse_str($inputStr));die;
+	    	$imageName = "25220_".'.png';
+	        $sql 	   = $this->db->select('user_id')->where('mobile',$mobile)->get('register_user')->result_array();
+	        $filePath 	  = "media/users/n".$sql[0]['user_id'].'/';
+	        $urlPath  	  = 'http://www.fablesfn.com/'.$filePath;
+	        $fileRealPath = $_SERVER['DOCUMENT_ROOT'].'/'.$filePath;
+
+            if (!is_dir($fileRealPath)){
+                mkdir($fileRealPath,0777,true);
+            }
+            file_put_contents($fileRealPath.$imageName, base64_decode($header_picture_url));
+			$data=[
+				"mobile" => $mobile,
+				"header_picture_url" => $header_picture_url,
+			];
+			$res = $this->creg->Modifypic($data);
+			$res = $urlPath.''.$imageName;
+			$arr = [
+	    		"status" => "0",
+				"msg" => "头像上传成功",
+				"data" => $res,
+	    	];
+    	// }
+    	echo json_encode($arr);
+    	return;
+    }
+
+MODEL
+//     /*个人头像修改*/
+    public function Modifypic($mobile,$header_picture_url){
+        $mysql       = $this->db->select('user_id')->where('mobile',$mobile['mobile'])->get('register_user')->result_array();
+        $imageName = "25220_".'.png';
+        $filePath     = "media/users/n".$mysql[0]['user_id'].'/';
+        $urlPath      = 'http://www.fablesfn.com/'.$filePath;
+
+        $data = array(
+                'header_picture_url' =>$urlPath.$imageName,
+            );
+        $sql = $this->db->where('mobile',$mobile['mobile'])->update('register_user',$data);
+        // echo $this->db->last_query();die;   
+        return $urlPath;
+    }
