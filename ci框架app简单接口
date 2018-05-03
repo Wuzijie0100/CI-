@@ -1,0 +1,858 @@
+CONTROLLER
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
+class Mation extends CI_Controller {
+	function __construct(){
+        parent::__construct();
+        $this->load->model('cmation'); 
+        $this->load->model("chat");
+        $this->load->model("users");
+        $appid=$_REQUEST['appid'];
+		$appkey=$_REQUEST['appkey'];
+		if (!($appid==APPID&&$appkey==APPKEY)) {
+			$arr=[
+				"status"=>"10001",
+				"msg"=>"用户认证失败"
+			];
+			echo json_encode($arr);die;
+		}
+    }
+    /*24小时资讯*/
+	public function information(){
+		$limit=$_REQUEST['limit'];
+		if ($limit=="") {
+			$arr=[
+				"status"=>"100",
+				"msg"=>"请求参数无效",
+			];
+		}else{
+			$res=$this->cmation->getInfo($limit);
+			$arr=[
+				"status"=>"0",
+				"msg"=>"成功",
+				"data"=>$res
+			];
+		}
+		echo json_encode($arr);die;
+	}
+	/*用户登录*/
+	public function login(){
+		$mobile=$_REQUEST['mobile'];
+		$password=md5($_REQUEST['password']);
+		if ($mobile=="") {
+			$arr=[
+				"status"=>"20001",
+				"msg"=>"用户名不能为空！",
+			];
+		}elseif($password==""){
+			$arr=[
+				"status"=>"20002",
+				"msg"=>"密码不能为空！",
+			];
+		}else{
+			$res=$this->cmation->getUser($mobile,$password);
+			if (empty($res)) {
+					$arr=[
+					"status"=>"20003",
+					"msg"=>"账号或密码错误",
+				];
+			}else{
+					$arr=[
+					"status"=>"0",
+					"msg"=>"成功",
+					"data"=>$res
+				];
+			}
+			
+		}
+		echo json_encode($arr);
+	}
+	/*项目库*/
+	public function project(){
+		$res=$this->cmation->getproject();
+		// print_r($res);die;
+		$arr=[
+			"status"=>"0",
+			"msg"=>"成功",
+			"data"=>$res
+		];
+		echo json_encode($arr);
+	}
+	/*项目详情*/
+	public function prdetail(){
+		$prid=$_REQUEST['prid'];
+		$res=$this->cmation->getprdetail($prid);
+		$this->load->view('fable_app/detail.php',$res);
+	}
+	/*首页资讯*/
+	public function index(){
+		$limit=$_REQUEST['limit'];
+		if ($limit=="") {
+			$arr=[
+				"status"=>"100",
+				"msg"=>"请求参数无效",
+			];
+		}else{
+			$res=$this->cmation->getindex($limit);
+			$arr=[
+				"status"=>"0",
+				"msg"=>"成功",
+				"data"=>$res
+			];
+		}
+		echo json_encode($arr);die;
+	}
+	/*资讯详情*/
+	public function articlelist(){
+		$id=$_REQUEST['id'];
+		$res=$this->cmation->getmationinfo($id);
+		$this->load->view('fable_app/articleindex.php',$res);
+	}
+	/*焦点资讯*/
+	public function focus(){
+		$res=$this->cmation->getfocus();
+		$arr=[
+			"status"=>"0",
+			"msg"=>"成功",
+			"data"=>$res
+		];
+		echo json_encode($arr);die;
+	}
+	/*资讯搜索*/ 	
+	public function searchinf(){
+		$search=$_REQUEST['search'];
+		if ($search=="") {
+			$arr=[
+				"status"=>"100",
+				"msg"=>"请求参数无效",
+			];
+		}else{
+			$res=$this->cmation->searchinfo($search,$limit);
+			$arr=[
+				"status"=>"0",
+				"msg"=>"成功",
+				"data"=>$res
+			];
+		}
+		echo json_encode($arr);die;
+	}
+	/*项目搜索*/
+	public function searchpro(){
+		$search=$_REQUEST['search'];
+		if ($search==""&& $limit=="") {
+			$arr=[
+				"status"=>"100",
+				"msg"=>"请求参数无效",
+			];
+		}else{
+			$res=$this->cmation->searchproject($search,$limit);
+			$arr=[
+				"status"=>"0",
+				"msg"=>"成功",
+				"data"=>$res
+			];
+		}
+		echo json_encode($arr);die;
+	}
+	/*24小时资讯搜索*/
+	public function searchmation(){	
+		$search=$_REQUEST['search'];
+		if ($search==""&& $limit=="") {
+			$arr=[
+				"status"=>"100",
+				"msg"=>"请求参数无效",
+			];
+		}else{
+			$res=$this->cmation->searchinfomation($search,$limit);
+			$arr=[
+				"status"=>"0",
+				"msg"=>"成功",
+				"data"=>$res
+			];
+		}
+		echo json_encode($arr);die;
+	}
+	/*BBK首页*/
+	public function bbkindex(){	
+		$res=$this->cmation->getAllBT();
+		foreach($res as $k=>$v)
+		{
+			$res[$k]['startprice']=$this->cmation->getStartPrice($res[$k]['name']);
+			$res[$k]['maxPrice']=round($this->cmation->getTodayMax($res[$k]['name']),2);
+			$res[$k]['minPrice']=round($this->cmation->getTodayMin($res[$k]['name']),2);
+			$res[$k]['newPrice']=round($this->cmation->getNewPrice($res[$k]['name']),2);
+		}
+		$arr=[
+				"status"=>"0",
+				"msg"=>"成功",
+				"data"=>$res
+			];
+		echo json_encode($arr);
+	}
+	//获取首页数据
+	public function getIndexInfo()
+	{
+		$btId=$_REQUEST['nowCard'];
+		if ($btId=="") {
+			$arr=[
+				"status"=>"100",
+				"msg"=>"请求参数无效",
+			];
+		}else{
+			$btname=$this->cmation->getBTNameBYId($btId);
+			if($btname)
+			{
+				$res=$this->cmation->getAllinfo($btname);
+				$arr=[
+					"status"=>"0",
+					"msg"=>"成功",
+					"data"=>$res
+				];
+			}
+		}
+		echo json_encode($arr);
+	}
+	//获取每分钟交易数据
+	public function getnowbtinfo()
+	{
+		$code=$_REQUEST['codename'];
+		$nowtime=$_REQUEST['ntime'];
+		$res=$this->cmation->getchangepear($code,$nowtime);
+		$arr=[
+				"status"=>"0",
+				"msg"=>"成功",
+				"data"=>$res
+			];
+		echo json_encode($arr);
+	}
+	//注册发送验证码
+	public function getcode()
+	{
+		$mobile=$_REQUEST['mobile'];
+		if(!empty($mobile))
+		{
+			$result = $this->db->where('mobile', $mobile)->get('register_user')->row();
+			if($result)
+			{
+				$arr=[
+				"status"=>"1000001",
+				"msg"=>"已被注册",
+				];
+			}
+			else
+			{
+				$roundstr = rand ( 100000, 999999 );
+				$content = "【Fable】您的短信验证码为：" . $roundstr . "，请妥善保管。";
+				$result1 = $this->chat->write_roundstr ($mobile, $roundstr, $content );
+				if($result1)
+				{
+					$arr=[
+					"status"=>"0",
+					"msg"=>"验证码已发送",
+					];
+				}
+			}
+		}
+		else
+		{
+			$arr=[
+				"status"=>"1000000",
+				"msg"=>"手机号不能为空",
+				];
+		}
+		echo json_encode($arr);
+	}
+	//注册
+	public function userRegister(){
+		$mobile=$_REQUEST['mobile'];
+		$code=$_REQUEST['code'];
+		$password=$_REQUEST['password'];
+		if ($mobile=="") {
+			$arr=["status"=>"1000000","msg"=>"手机号不能为空",];
+		}elseif ($code=="") {
+			$arr=["status"=>"1000005","msg"=>"验证码不能为空",];
+		}elseif ($password=="") {
+			$arr=["status"=>"1000006","msg"=>"密码不能为空！",];
+		}else{
+			$data=[
+				"mobile"=>$mobile,
+				"code"=>$code,
+				"password"=>$password
+			];
+			$result = $this->cmation->register($data);
+			switch($result){
+				case 0:
+					$arr=["status"=>"200002","msg"=>"账号已经被注册",];
+					break;
+				case -1:
+					$arr=["status"=>"200001","msg"=>"验证码错误",];
+					break;
+				default:
+					$arr=["status"=>"0","msg"=>"注册成功","data"=>$result];
+					break;
+			}
+			echo json_encode($arr);
+		}
+	}
+
+
+	/*短信登录/密码重置短信验证码获取*/
+	public function smscode()
+	{
+		$mobile=$_REQUEST['mobile'];
+		if(!empty($mobile))
+		{
+			$result = $this->db->where('mobile', $mobile)->get('register_user')->row();
+			if($result ==array())
+			{
+				$arr=[
+				"status"=>"1000003",
+				"msg"=>"手机号未注册，请先注册",
+				];
+			}else
+			{
+				$roundstr = rand ( 100000, 999999 );
+				$content = "【Fable】您的短信验证码为：" . $roundstr . "，请妥善保管。";
+				$result1 = $this->chat->write_roundstr ($mobile, $roundstr, $content );
+				if($result1)
+				{
+					$arr=[
+					"status"=>"0",
+					"msg"=>"验证码已发送",
+					];
+				}
+			}
+		}
+		else
+		{
+			$arr=[
+				"status"=>"1000000",
+				"msg"=>"手机号不能为空",
+				];
+		}
+		echo json_encode($arr);
+	}
+
+		/*短信登录*/
+	public function smslogin(){
+		$mobile=$_REQUEST['mobile'];
+		$code=$_REQUEST['code'];
+		if ($mobile=="") {
+			$arr=["status"=>"1000000","msg"=>"手机号不能为空",];
+		}elseif ($code=="") {
+			$arr=["status"=>"1000005","msg"=>"验证码不能为空",];
+		}else{
+			$data=[
+				"mobile"=>$mobile,
+				"code"=>$code,
+			];
+			// 验证验证码
+			$result = $this->cmation->regis($data);
+			// print_r($result);die;
+			switch($result){
+				case -1:
+					$arr=["status"=>"200001","msg"=>"验证码错误",];
+					break;
+				default:
+					$arr=["status"=>"0","msg"=>"登录成功","data"=>$result];
+					// $this->returnmessage['data'] = substr($user->mobile,0,3).'****';
+					break;
+			}
+		}
+			echo json_encode($arr);
+	}
+
+
+	/*重置密码*/
+	public function newpassword(){
+		$mobile=$_REQUEST['mobile'];
+		$code=$_REQUEST['code'];
+		$password=$_REQUEST['password'];
+		if ($mobile=="") {
+			$arr=["status"=>"1000000","msg"=>"手机号不能为空",];
+		}elseif ($code=="") {
+			$arr=["status"=>"1000005","msg"=>"验证码不能为空",];
+		}elseif($password==""){
+			$arr=["status"=>"1000006","msg"=>"密码不能为空",];
+		}else{
+			$data=[
+				"mobile"=>$mobile,
+				"code"=>$code,
+				"password"=>$password,
+			];
+		$result = $this->cmation->newpass($data);
+		switch($result){
+				case 1:
+					$arr=["status"=>"200000","msg"=>"密码修改失败",];
+					break;
+				case 2:
+					$arr=["status"=>"200001","msg"=>"验证码错误",];
+					break;
+				default:
+					$arr=["status"=>"0","msg"=>"密码修改成功"];
+					break;
+			}
+		}
+			echo json_encode($arr);
+	}
+	/*关于我们*/
+	public function aboutus(){
+		$this->load->view('fable_app/aboutus.html');
+	}
+	/*第三方登录*/
+	public function thirdlogin(){
+		$type=$_REQUEST['type'];//用户唯一标识
+		$uid=$_REQUEST['uid'];//用户唯一标识
+		$name=$_REQUEST['name'];//用户昵称
+		$gender=$_REQUEST['gender'];//用户性别
+		$iconurl=$_REQUEST['iconurl'];//用户头像
+		$data=[
+			"istype"=>$type,
+			"uid"=>$uid,
+			"name"=>$name,
+			"gender"=>$gender,
+			"iconurl"=>$iconurl,
+		];
+		$res=$this->cmation->findthird($data['uid']);
+		if (!$res=="") {
+			$info=$this->cmation->finduser($res['uid'],$type);
+			if ($info) {
+				$arr=["status"=>"0","msg"=>"登录成功","data"=>$info];
+				echo json_encode($arr);die;
+			}else{
+				$data=["user_id"=>$uid,"user_name"=>"","nickname"=>$name,"email"=>"","mobile"=>"","header_picture_url"=>$iconurl,"sex"=>$gender,"birthdate"=>"","introduce"=>""];
+				$arr=["status"=>"0","msg"=>"登录成功","data"=>$data];
+				echo json_encode($arr);die;
+			}
+		}else{
+			$arr=$this->cmation->addthird($data);
+			$data=["user_id"=>$uid,"user_name"=>"","nickname"=>$name,"email"=>"","mobile"=>"","header_picture_url"=>$iconurl,"sex"=>$gender,"birthdate"=>"","introduce"=>""];
+				$arr=["status"=>"0","msg"=>"登录成功","data"=>$data];
+				echo json_encode($arr);die;
+		}
+	}
+	/*用户绑定*/
+	public function userbinding(){
+		$id=$_REQUEST['id'];
+		$type=$_REQUEST['type'];//用户唯一标识
+		$uid=$_REQUEST['uid'];//用户唯一标识
+		$name=$_REQUEST['name'];//用户昵称
+		$gender=$_REQUEST['gender'];//用户性别
+		$iconurl=$_REQUEST['iconurl'];//用户头像
+		$data=[
+			"istype"=>$type,
+			"uid"=>$uid,
+			"name"=>$name,
+			"gender"=>$gender,
+			"iconurl"=>$iconurl,
+		];
+		$res=$this->cmation->findthird($uid);
+		if (empty($res)) {
+			$arr=$this->cmation->addthird($data);
+			$info=$this->cmation->updatethird($type,$id,$uid);
+			$arr=["status"=>"0","msg"=>"绑定成功","data"=>""];
+			echo json_encode($arr);
+		}else{
+			$info=$this->cmation->updatethird($type,$id,$uid);
+			$arr=["status"=>"0","msg"=>"绑定成功","data"=>""];
+			echo json_encode($arr);
+		}
+
+	}
+	/*第三方解绑*/
+	public function thirduntie(){
+		$id=$_REQUEST['id'];
+		$type=$_REQUEST['type'];
+		$info=$this->cmation->delthird($id,$type);
+		$arr=["status"=>"0","msg"=>"解绑成功","data"=>""];
+		echo json_encode($arr);
+	}
+	/*查询*/
+	public function thiedfind(){
+		$id=$_REQUEST['id'];
+		$arr=$this->cmation->thirdfind($id);
+		if ($arr['thirdqq']==""&&$arr['thirdweixin']=="") {
+			$arr=["status"=>"0","msg"=>"绑定成功","data"=>["thirdqq"=>"","thirdweixin"=>""]];
+		}else{
+			$arr=["status"=>"0","msg"=>"绑定成功","data"=>$arr];
+		}
+		echo json_encode($arr);
+	}
+	public function versions(){
+		$arr=["status"=>"0","msg"=>"成功","data"=>"1.0.1"];
+		echo json_encode($arr);
+	}
+}
+
+
+
+MODEL
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+class Cmation extends CI_Model{
+	//public $result=array();
+	function __construct()
+	{
+		parent::__construct();
+		$this->load->database('default', TRUE);
+	}
+	/*24小时资讯获取*/
+	public function getInfo($limit){
+		$res=$this->db->select('id,author,title,description,publish_time,link')->where('isdelete',2)->where('catid','53')->order_by('publish_time','DESC')->limit(10,$limit)->get('content')->result_array();
+		// echo $this->db->last_query();die;
+		return $res;
+	}
+	/*用户登录*/
+	public function getUser($username,$password){
+		$res =$this->db->select('user_id,user_name,nickname,email,mobile,header_picture_url,sex,birthdate,introduce')->where('mobile',$username)->where("password",$password)->get('register_user')->row_array();
+        if ($res['header_picture_url']=="") {
+            return $res;
+        }else{
+            $res['header_picture_url']="http://www.fablesfn.com/media/users/n".$res['user_id']."/".$res['header_picture_url']; 
+            $res['header_picture_url']="http://www.fablesfn.com/media/users/n".$res['user_id']."/".'25220_.png';
+        }
+       
+		// echo $this->db->last_query();die;
+		//返回数据
+		return $res;
+	}
+	/*项目库首页*/
+	public function getproject()
+    {
+    	$sql="SELECT id,name,picture_url,target_money,process_starttime,process_endtime FROM (`project`) WHERE `publish_st` = 2 AND `isdelete` = 2 ORDER BY `id` desc LIMIT 6";
+    	// $res=$this->db->query($sql);
+    	$query = $this->db->query($sql);
+    	$arr=[];
+    	foreach ($query->result_array() as $row =>$v)
+		{
+		   $arr[$row]=$v;
+		}
+		foreach ($arr as $key => $value) {
+            $arr[$key]['picture_url']="http://www.fablesfn.com/media/assets/images/".$value['picture_url'];
+            $arr[$key]['projectlist']="http://www.fablesfn.com/index.php/mation/prdetail?appid=12345678&appkey=fables&prid=".$value['id'];
+        }
+		return $arr;
+    }
+    /*项目详情页*/
+    public function getprdetail($id){
+    	$id=(int)$id;
+        $arr= $this->db->select("id,name,picture_url,body")->where('publish_st',2)->where('isdelete',2)->where('id',$id)->get("project")->row_array();
+        return $arr;
+    }
+    /*获取首页资讯*/
+    public function getindex($limit){
+    	$res=$this->db->select("id,content.user_id,catid,title,author,description,picture_url,header_picture_url,publish_time")->join('register_user','content.author = register_user.nickname')->where('catid',52)->where('publish_st',2)->where('isdelete',2)->order_by("publish_time desc")->limit(10,$limit)->get("content")->result_array();
+    	// echo $this->db->last_query();die;
+        foreach ($res as $key => $value) {
+            $res[$key]['picture_url']="http://www.fablesfn.com/media/assets/images/".$value['picture_url'];
+            $res[$key]['header_picture_url']="http://www.fablesfn.com/media/users/n".$value['user_id']."/".$value['header_picture_url'];
+            $res[$key]['articlelist']="http://www.fablesfn.com/index.php/mation/articlelist?appid=12345678&appkey=fables&id=".$value['id'];
+        }
+        return $res;
+    }
+    /*获取资讯详情*/
+    public function getmationinfo($id){
+        $res=$this->db->select("id,content.user_id,title,author,body,keywords,publish_time,picture_url,header_picture_url")->join('register_user','content.author = register_user.nickname')->where('id',$id)->get("content")->row_array();
+        // if ($res['header_picture_url']=="") {
+        //     return $res;
+        // }else{
+        //     $res['picture_url']="http://www.fablesfn.com/media/assets/images/".$res['picture_url'];
+        //     $res['header_picture_url']="http://www.fablesfn.com/media/users/n".$res['user_id']."/".$res['header_picture_url']; 
+        // }
+        return $res;
+    }
+    /*获取焦点资讯*/
+    public function getfocus(){
+		$res=$this->db->select("id,catid,title,author,description,picture_url,publish_time")->where('catid',52)->where('publish_st',2)->where('isdelete',2)->where('is_shouye',1)->limit(1)->get("content")->result_array();
+        foreach ($res as $key => $value) {
+            $res[$key]['picture_url']="http://www.fablesfn.com/media/assets/images/".$value['picture_url'];
+            $res[$key]['articlelist']="http://www.fablesfn.com/index.php/mation/articlelist?appid=12345678&appkey=fables&id=".$value['id'];
+        }
+		return $res;
+    }
+
+
+    /*资讯搜索*/ 
+    public function searchinfo($search,$limit){
+        $res = $this->db->like('title', $search, 'both')->where('catid',52)->where('publish_st',2)->where('isdelete',2)->order_by("publish_time desc")->limit(10,$limit)->get("content")->result_array();
+        foreach ($res as $key => $value) {
+            $res[$key]['picture_url']="http://www.fablesfn.com/media/assets/images/".$value['picture_url'];
+            $res[$key]['header_picture_url']="http://www.fablesfn.com/media/assets/images/".$value['header_picture_url'];
+            $res[$key]['articlelist']="http://www.fablesfn.com/index.php/mation/articlelist?appid=12345678&appkey=fables&id=".$value['id'];
+        }
+        return $res;
+    }
+    /*项目搜索*/
+    public function searchproject($search){
+        $res = $this->db->like('name', $search, 'both')->where('publish_st',2)->where('isdelete',2)->order_by("id desc")->limit(1)->get("project")->result_array();
+    	// echo $this->db->last_query();die; 
+        foreach ($res as $key => $value) {
+            $res[$key]['picture_url']="http://www.fablesfn.com/media/assets/images/".$value['picture_url'];
+            $res[$key]['projectlist']="http://www.fablesfn.com/index.php/mation/prdetail?appid=12345678&appkey=fables&prid=".$value['id'];
+        }   
+    	return $res;
+    }
+    /*24小时资讯搜索*/
+    public function searchinfomation($search,$limit){
+        $res = $this->db->like('title', $search, 'both')->where('isdelete',2)->where('catid','53')->order_by('publish_time','DESC')->limit(10,$limit)->get('content')->result_array();
+    		return $res;
+    }
+    /*BBK*/
+    public function getAllBT()
+    {
+        $res=$this->db->get('btname')->result_array();
+        return $res;
+    }
+    //获取该币今的开始价
+    public function getStartPrice($name)
+    {
+        $res=0;
+        //$date=date('Y-m-d',time());
+        $beginToday=mktime(0,0,0,date('m'),date('d'),date('Y'));
+        $sql1="select now_price from btdata where nowtimestemp>='".$beginToday."' and name='".$name."' limit 1";
+        $row1=$this->db->query($sql1)->row_array();
+        if($row1['now_price']>0)
+        {
+            $res=$row1['now_price'];
+        }
+        return $res;
+    }
+    //获取最大值
+    public function getTodayMax($name)
+    {
+        $beginToday=mktime(0,0,0,date('m'),date('d'),date('Y'));
+        $sql="select max(now_price) as xprice from btdata where name='".$name."' and nowtimestemp>=".$beginToday;
+        $res=$this->db->query($sql)->row_array();
+        return $res['xprice'];
+    }
+    //获取最小值
+    public function getTodayMin($name)
+    {
+        $beginToday=mktime(0,0,0,date('m'),date('d'),date('Y'));
+        $sql="select min(now_price) as nprice from btdata where name='".$name."' and nowtimestemp>=".$beginToday;
+        $res=$this->db->query($sql)->row_array();
+        return $res['nprice'];
+    }
+    //获取最新价
+    public function getNewPrice($name)
+    {
+        $beginToday=mktime(0,0,0,date('m'),date('d'),date('Y'));
+        $sql="select now_price  from btdata where name='".$name."' order by id desc limit 1";
+        $res=$this->db->query($sql)->row_array();
+        return $res['now_price'];
+
+    }
+    //根据交易所获取票
+    public function getBTNameBYId($btId)
+    {
+        $res=$this->db->select('name')->where('id',$btId)->get('btname')->row_array();
+        return $res['name'];
+    }
+    //获取所有开始数据
+    public function getAllinfo($cName)
+    {
+        $beginToday=mktime(0,0,0,date('m'),date('d'),date('Y'));
+        $res=$this->db->select('id,now_price,pay_num,ptime')->where('nowtimestemp >=',$beginToday)->where('name',$cName)->group_by('bt_num')->get('btdata')->result_array();
+        // return $this->db->last_query($res);
+        $num=count($res);
+        if($num==1)
+        {
+            $res1=$this->db->select('pay_num')->where('id <',$res[0]['id'])->where('name',$cName)->group_by(array("id", "bt_num"))->order_by('id','desc')->limit(1)->get('btdata')->row_array();
+            $res[0]['pay_num']=$res[0]['pay_num']-$res1['pay_num'];
+        }
+        else
+        {
+            for($i=$num-1;$i>=0;$i--)
+            {
+                if($i==0)
+                {
+                    $res1=$this->db->select('pay_num')->where('id <',$res[$i]['id'])->where('name',$cName)->group_by(array("id", "bt_num"))->order_by('id', 'desc')->limit(1)->get('btdata')->row_array();
+                    $res[0]['pay_num']=$res[0]['pay_num']-$res1['pay_num'];
+                }
+                else
+                {
+                    $res[$i]['pay_num']=$res[$i]['pay_num']-$res[$i-1]['pay_num'];
+                }
+            }
+        }
+        return $res;
+    }
+    //获取每分钟交易数据
+    public function getchangepear($code,$nowtime)
+    {
+        $res=$this->db->select('id,now_price,percent,pay_num')->where('name',$code)->where('ptime',$nowtime)->order_by('id','desc')->limit(1)->get('btdata')->row_array();
+        // echo $this->db->last_query();die;
+        $res2=$this->db->select('pay_num')->where('name',$code)->where('id <',$res['id'])->order_by('id','desc')->limit(1)->get('btdata')->row_array();
+        $res['pay_num']=$res['pay_num']-$res2['pay_num'];
+        unset($res['id']);
+        return $res;
+    }
+    // 验证验证码
+    function register($context)
+    {
+        if($this->getUserForMobile($context['mobile'])) {
+            return 0;
+        }else if($this->verifyCode($context['mobile'],$context['code'])==2002){
+            return -1;
+        }else{
+            unset($context['code']);
+            $context['password']        = md5($context['password']);
+            $context['create_time']     =  date("Y-m-d H:i:s");
+            $context['last_login_time'] =  date("Y-m-d H:i:s");
+            $context['nickname'] =  substr($context['mobile'],0,2)."xxxx".substr($context['mobile'],-4).'用户';
+            $this->db->insert("register_user", $context);
+            $userId = $this->db->insert_id();
+            $userinfo=$this->getuserinfo($userId);
+            return $userinfo;
+        }
+    }
+    public  function getUserForMobile($mobile){
+        return $this->db->where('mobile',$mobile)->get('register_user')->num_rows;
+    }
+    public function verifyCode($mobile,$code){
+        if(!empty($mobile) && !empty($code)){
+            $result = $this->check_roundstr($mobile,$code);
+            $result = $this->check_sms($mobile,$code);
+            if($result == 3){
+                $return =  2001;
+            }else{
+                $return =  2002;
+            }
+        }else{
+            $return =  2002;
+        }
+        return $return;
+    }
+    /**
+     * 验证短信验证码是否有效
+     * @param unknown $mobile
+     * @param unknown $roundstr
+     * @param int 1:已经过期，2验证码错误，3验证码正确
+     */
+    public function check_roundstr($mobile,$roundstr)
+    {
+        $time=time();
+        $sql="select *  from smsround where ('".$time."' between starttime and endtime ) and mobile='".$mobile."' ";
+        $count1=$this->db->query($sql)->num_rows();
+        // print_r($count1);die;
+        if($count1==0){
+            return 1;
+        }
+        $query_sql1 = "select *  from smsround where roundstr='".$roundstr."'  and mobile='".$mobile."'";
+        $count2 = $this->db->query($query_sql1)->num_rows();
+        if($count2==0){
+            return 2;
+        }
+        return 3;
+        
+        
+    }
+    public function getuserinfo($user_id){
+        $res=$this->db->select('user_id,user_name,nickname,email,mobile,header_picture_url,sex,introduce')->where('user_id',$user_id)->get('register_user')->row_array();
+        return $res;
+    }
+
+
+    /*短信登录监测*/
+    function regis($context)
+    {
+        // print_r( $context);die;
+        if($this->verifyCode($context['mobile'],$context['code'])==2002){
+            return -1;
+        }
+        $sqlcode = $this->db->select('roundstr')->where('mobile',$context['mobile'])->get('smsround')->row_array();
+        // print_r( $sqlcode);;die;
+        if($this->getUserForMobile($context['mobile']) && $context['code'] == $sqlcode['roundstr']){
+            $res =$this->db->select('user_id,user_name,nickname,email,mobile,header_picture_url,sex,introduce')->where('mobile',$context['mobile'])->get('register_user')->row_array();
+            return $res;
+        }
+    }
+
+
+    /*短信登录*/
+     public function check_sms($mobile,$roundstr)
+    {
+        $time=time();
+        $sql="select *  from smsround where ('".$time."' between starttime and endtime ) and mobile='".$mobile."' ";
+        $count1=$this->db->query($sql)->num_rows();
+        $query_sql1 = "select *  from smsround where roundstr='".$roundstr."'  and mobile='".$mobile."'";
+        $count2 = $this->db->query($query_sql1)->num_rows();
+        // print_r($count1);die;
+        if($count1!=0){
+            return 3;
+        }
+        $query_sql1 = "select *  from smsround where roundstr='".$roundstr."'  and mobile='".$mobile."'";
+        $count2 = $this->db->query($query_sql1)->num_rows();
+        if($count2!=0){
+            return 3;
+        }
+        return 1;
+    }
+
+    /*重置密码*/
+    public function newpass($monile)
+    {
+        // print_r($monile);die;    
+        $sqlcode = $this->db->select('roundstr')->where('mobile',$monile['mobile'])->get('smsround')->row_array();
+        // print_r($sqlcode) ;die;
+        if($sqlcode['roundstr'] != $monile['code']){
+                return 2;
+            }
+        $row = $this->db->select('mobile')->where('mobile',$monile['mobile'])->get('register_user')->row();
+        if($row){
+            $data = array(
+                'password'  => md5($monile['password'])
+            );
+            $this->db->where('mobile',$monile['mobile'])->update('register_user', $data);
+            // echo $this->db->last_query();die; 
+            return 0;
+            
+        }else{
+            
+            if($this->verifyCode($context['mobile'],$context['code'])==2002){ 
+                return 1;
+            }
+        }
+        exit;
+    }
+    /*查询第三方用户*/
+    public function findthird($uid,$type){
+        return $res=$this->db->select('*')->where('uid',$uid)->get('thirdparty')->row_array();
+    }
+    /*查询用户*/
+    public function finduser($uid,$type){
+        if ($type==1) {
+           return $this->db->select('user_id,user_name,nickname,email,mobile,header_picture_url,sex,birthdate,introduce')->where('thirdweixin',$uid)->get('register_user')->row_array();
+        }elseif ($type==2) {
+           return $this->db->select('user_id,user_name,nickname,email,mobile,header_picture_url,sex,birthdate,introduce')->where('thirdqq',$uid)->get('register_user')->row_array();
+        }
+    }
+    /*添加第三方用户*/
+    public function addthird($data){
+       return  $result = $this->db->insert('thirdparty', $data);
+    }
+    /*修改user表第三方状态*/
+    public function updatethird($type,$id,$uid){
+        if ($type=='1') {
+            $data = array('thirdweixin' => $uid);
+            return $sql = $this->db->where('user_id',$id)->update('register_user',$data);
+        }elseif ($type=='2') {
+            $data = array('thirdqq' => $uid);
+            return $sql = $this->db->where('user_id',$id)->update('register_user',$data);
+        }
+    }
+    /*第三方解绑*/
+    public function delthird($id,$type){
+        if ($type=='1') {
+            $data = array('thirdweixin' => "");
+            return $sql = $this->db->where('user_id',$id)->update('register_user',$data);
+        }elseif ($type='2') {
+             $data = array('thirdqq' => "");
+            return $sql = $this->db->where('user_id',$id)->update('register_user',$data);
+        }
+    }
+    /*第三方查询*/
+    public function thirdfind($id){
+        return $res=$this->db->select('thirdqq,thirdweixin')->where('user_id',$id)->get('register_user')->row_array();
+    }
+}
+
