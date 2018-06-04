@@ -1,0 +1,132 @@
+views
+<!--发放糖果，设置vip框-->
+<div class="newbox">
+		    		<h3>糖果发放</h3>
+		    		<form action="#" method="post" class="newtoolf">
+		    			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;发放&nbsp;&nbsp;<input type="text" class="newtoolprice"/>&nbsp;&nbsp;个糖果。<br /><br />
+		    				<div class="	"><input type="checkbox" class="isck">&nbsp;&nbsp;设置成VIP客户。</label></div><br />
+		    				<div class="sbmit">
+		    					<input type="button" value="确定" class="newtoolsumt"/>
+		    					<input type="button" value="取消" class="newtoolqx"/>
+		    				</div>
+		    				<p>备注：发放的糖果数量，可以为“负”值，意味扣除积分</p>
+		    		</form>
+</div>
+<!--发放糖果，设置vip框-->
+
+            <!-- Unnamed (表格) -->
+            <table border="1" cellspacing="0" cellpadding="0" id="u1435" class="ax_default">
+								<tr>
+									<th>用户名</th>
+									<th>注册时间</th>
+									<th>手机号码</th>
+									<!--<th>现有道具</th>-->
+									<th>操作/当前状态</th>
+								</tr>
+								<?php foreach ($res4 as $key => $value) {?>
+								<tr>
+                  <td class="tdname"><div><span><img src='<?=base_url()?>media/bbk/img/u1835.png' class='vip' <?php if ($value['vip']=='2') {echo 'style="display: none;"';}?>></span></div>
+
+                  	<?php echo $value['nickname'] ?><a target="_blank" 
+                  	href ='http://admin.fablesfn.com/administrator/index.php/bbkbackstage/index0?uid=<?=$value['user_id'];?>';  
+                  	class="xiangbtn xqbtn" >详</a></td>
+									<td><?php echo $value['create_time'] ?></td>
+									<td><?php echo $value['mobile'] ?></td>
+									<!--<td>&nbsp;</td>-->
+									<td>
+										<a href="javascript:;" class="jin">
+											<img src="<?=base_url()?>media/bbk/images/bbk后台/u1469.png" class="pingbinoimg"/></a>
+										<a href="javascript:;" class="nojin" style="display: none;">
+											<img src="<?=base_url()?>media/bbk/images/bbk后台/u1471.png" class="pingbiimg"/></a>
+											&nbsp;&nbsp;&nbsp;
+										<a href="javascript:;" class="kai">
+											<img src="<?=base_url()?>media/bbk/images/bbk后台/u1474.png"/></a>
+										<a href="javascript:;" class="suo" style="display: none;">
+											<img src="<?=base_url()?>media/bbk/images/bbk后台/u1476.png" class="pingbiimg"/></a>
+											
+										<a href="javascript:;" class="vipbtn" onclick="Designated.init(<?=$value['user_id']?>)">
+											<img src="<?=base_url()?>media/bbk/img/u1713.png" class="pingbinoimg"/></a>	
+											
+									</td>
+								</tr>
+								<?php } ?>
+							</table>
+							
+
+			<script type="text/javascript">
+									//糖果发放 -- 按钮
+									Designated={}
+									Designated.id = 0;
+								Designated.init=function(id){
+								$.ajax({
+						          url:"<?=anchorurl('bbkbackstage/kvip')?>",
+						          data:{id:id},
+						          type:"POST",
+						          success:function(result){
+						              if (result==1) {
+
+						              }
+						          }
+						      });
+								}
+								$(".vipbtn").click(function(){
+									$(".newbox").find(".newtoolprice").val('');
+									$(".newbox").find(".isckbox").find(".isck").attr("checked",false);
+									$(".newbox").show();
+									$t=$(this);
+
+								})
+                	//糖果发放框 -- 确定
+								$(".newtoolsumt").click(function(){
+										var newtoolprice=$(this).parent().parent().find(".newtoolprice").val();
+										console.log(newtoolprice);
+										if($(this).parent().parent().find(".isckbox").find(".isck").is(':checked')){
+											// var userid=$(this).parent().parent().find("#user_id").val();
+											var str='<img src="<?=base_url()?>media/bbk/img/u1835.png" class="vip"/>';
+											$t.parent().parent().find(".tdname").append(str);
+										}
+										$(this).parent().parent().parent().hide();
+									    $.ajax({
+									          url:"<?=anchorurl('bbkbackstage/kvip')?>",
+									          data:{newtoolprice:newtoolprice},
+									          type:"POST",
+									          success:function(result){
+									              if (result==1) {
+
+									              }
+									          }
+									      });
+									})
+									//糖果发放框 -- 取消
+									$(".newtoolqx").click(function(){
+										$(this).parent().parent().parent().hide();
+									})
+
+
+
+控制器
+    /*开启vip*/
+    public function kvip(){
+        $newtoolprice=$_REQUEST['newtoolprice'];
+        $id=$_REQUEST['id'];
+        //设置vip
+        $date = array(
+                'vip'  => "1",
+        );
+        $res = $this->db->where('user_id',$id)->update('register_user', $date);
+        //积分加减
+        $integral = $this->db->select('integral')->where('user_id',$id)->get('register_user')->row_array();
+        $fen = $integral['integral'];
+        $this->db->where('user_id',$id);
+               $this->db->set('integral',$fen.'+'.$newtoolprice,FALSE);
+               $this->db->update('register_user');
+
+        $integral0 = $this->db->select('integral')->where('uid',$id)->get('consumption')->row_array();
+        $fen0 = $integral0['integral'];
+        echo $fen0;
+        $this->db->where('uid',$id);
+               $this->db->set('integral',$fen0.'+'.$newtoolprice,FALSE);
+               $this->db->update('consumption');
+        // echo $this->db->last_query();die;
+        echo $res;
+    }
