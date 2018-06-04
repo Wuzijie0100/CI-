@@ -1,0 +1,293 @@
+控制器
+    	/*积分修改*/
+    public function integral(){
+    	$uid=$_REQUEST['uid'];
+    	// 获取调用接口传过来的数据 ，安卓可以多传一个图片扩展名（参数）；
+    	$inputStr = file_get_contents('php://input');
+    	parse_str($inputStr);
+
+    	$data = json_decode($inputStr, true);  //解析json数据，加第二个参数true 是数组 不然是对象
+		$res=$this->creg->Modifyintegral($b);
+		$arr = [
+	    		"status" => "10009",
+				"msg" => "今天已签到",
+				"data" => $res,
+	    	];
+		$res=$this->creg->Modifyintegral($uid);
+			$arr = [
+	    		"status" => "0",
+				"msg" => "积分修改成功",
+				"data" => $res,
+	    	];
+    	echo json_encode($arr);
+    }
+    模型
+        /*积分修改*/
+     public function Modifyintegral($uid){
+     	$state = $this->db->select('state')->where('uid',$uid)->get('consumption')->row_array();
+     	$a = date("w");
+     	if($state['state'] == $a){
+     		$b = '今天已签到';
+     		return $b;die;
+     	}else{
+        $endtime = $this->db->select('endtime')->where('uid',$uid)->get('consumption')->row_array();
+        //现在的时间
+        $ttime = $this->db->select('todaytime')->where('uid',$uid)->get('consumption')->row_array();
+        $data1 = array(
+                'endtime'  => $ttime['todaytime']
+            );
+        $this->db->where('uid',$uid)->update('consumption', $data1);
+
+        //原来的积分
+        $yintegral = $this->db->select('integral')->where('uid',$uid)->get('consumption')->row_array();
+        // die;
+        //更新签到时间
+        $data = array(
+                'todaytime'  => date("w")
+            );
+        $this->db->where('uid',$uid)->update('consumption', $data);
+        //原来的时间
+        $etime = $this->db->select('endtime')->where('uid',$uid)->get('consumption')->row_array();
+
+        $ytime =  date("w");
+        if($ytime == 0){$ytime = 0;$ytime = &$ytime;$ytime = 7;}
+        $difference = $ytime - $etime['endtime'];
+
+        //第一次签到
+        if($difference == 1){
+            $totime = $this->db->select('todaytime')->where('uid',$uid)->get('consumption')->row_array();
+            if($totime['todaytime'] == 1){
+            //周一
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 10',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+        // echo $this->db->last_query();die;
+            // return $uid;
+            }elseif($totime['todaytime'] == 2){
+                //周二
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 20',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }elseif($totime['todaytime'] == 3){
+                //周三
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 50',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }elseif($totime['todaytime'] == 4){
+                //周四
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 80',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               return $uid;
+            }elseif($totime['todaytime'] == 5){
+                //周五
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 100',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }elseif($totime['todaytime'] == 6){
+                //周六
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 200',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               return $uid;
+            }else{
+                //周日
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 500',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }
+        }elseif($difference >= 2 && $etime['endtime'] != 0){
+            $entime = $this->db->select('endtime')->where('uid',$uid)->get('consumption')->row_array();
+            //实际本次签到的日期
+            $todtime = $entime['endtime']+1;
+            $data2 = array(
+                'todaytime'  => $todtime
+            );
+            $this->db->where('uid',$uid)->update('consumption', $data2);
+            $todatime = $this->db->select('todaytime')->where('uid',$uid)->get('consumption')->row_array();
+            if($todatime['todaytime'] == 1){
+            //周一
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 10',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+        // echo $this->db->last_query();die;
+            // return $uid;
+            }elseif($todatime['todaytime'] == 2){
+                //周二
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 20',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }elseif($todatime['todaytime'] == 3){
+                //周三
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 50',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }elseif($todatime['todaytime'] == 4){
+                //周四
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 80',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }elseif($todatime['todaytime'] == 5){
+                //周五
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 100',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }elseif($todatime['todaytime'] == 6){
+                //周六
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 200',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }else{
+                //周日
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 500',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }
+            // echo $todtime;die;
+        }elseif($endtime['endtime'] == 0){
+            $data3 = array(
+                'todaytime'  => date("w")
+            );
+        $this->db->where('uid',$uid)->update('consumption', $data3);
+        $todaytime = $this->db->select('todaytime')->where('uid',$uid)->get('consumption')->row_array();
+            if($todaytime['todaytime'] == 1){
+            //周一
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 10',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+        // echo $this->db->last_query();die;
+            // return $uid;
+            }elseif($todaytime['todaytime'] == 2){
+                //周二
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 20',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }elseif($todaytime['todaytime'] == 3){
+                //周三
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 50',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }elseif($todaytime['todaytime'] == 4){
+                //周四
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 80',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }elseif($todaytime['todaytime'] == 5){
+                //周五
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 100',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }elseif($todaytime['todaytime'] == 6){
+                //周六
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 200',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }else{
+                //周日
+               $res = $this->db->where('uid',$uid);
+               $this->db->set('integral',$yintegral['integral'].'+ 500',FALSE);
+               $this->db->update('consumption');
+               $data = array(
+                'state'  => date("w")
+            );
+        	   $this->db->where('uid',$uid)->update('consumption', $data);
+               // return $uid;
+            }
+        }
+     }
+}
