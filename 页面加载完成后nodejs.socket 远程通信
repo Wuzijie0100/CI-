@@ -1,3 +1,4 @@
+views
 </script>
 <script type="text/javascript">
 var $$ = function(func){
@@ -32,3 +33,19 @@ var num = JSON.stringify(num);
     // alert("页面加载完成====》onload");  
 })
 </script>
+
+
+
+
+控制器
+     public function qqq(){
+        $dsn = "mysql:host=localhost;dbname=Sensitive";
+        $db = new PDO($dsn, 'root', 'qqq111');
+        $db->query("set names utf8");
+        $db->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
+        $db->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+        $res = "SELECT uid FROM (`Sechat`)";
+        $num = $db->query($res)->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode($num);
+        }
+
