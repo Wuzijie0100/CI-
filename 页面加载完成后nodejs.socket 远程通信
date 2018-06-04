@@ -1,0 +1,34 @@
+</script>
+<script type="text/javascript">
+var $$ = function(func){
+    var oldOnload =window.onload;
+    if(typeof window.onload != 'function'){
+        window.onload = func;
+    }else{
+        window.onload = function(){
+            oldOnload();
+            func();
+        }
+    }
+}
+$$(function(){
+  socket = io.connect('http://47.75.9.166:8099');
+  $.ajax({
+url : "<?=anchorurl('bbkbackstage/qqq')?>",//请求地址
+dataType : "json",//数据格式 
+type : "post",//请求方式
+async : true,//是否异步请求
+success : function(num) {
+//data是服务器返回数据
+var num = JSON.stringify(num);
+                socket.emit('user',{'uid':num});
+            // alert(num);
+        }
+});
+  // if(id!="")
+  //   {
+  //     socket.emit('danmu',{'uid':id});
+  //   }
+    // alert("页面加载完成====》onload");  
+})
+</script>
