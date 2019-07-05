@@ -1,0 +1,38 @@
+<?php
+$dsn   = "mysql:dbname=pdo;host=localhost";
+$user   = "root";
+$password = "root";
+$dbh   = new PDO($dsn, $user, $password);
+//使用事务之前，要先关闭自动提交。不关闭的话，出现异常的时候没法回滚。
+//据手册描述，ATTR_AUTOCOMMIT属性只在mysql，OCI(oracle),firebird三种数据库中可用
+$dbh->setAttribute(PDO::ATTR_AUTOCOMMIT, 0);
+$cash = 100;
+try {
+  $dbh->beginTransaction();
+  //用户A账户扣除100
+  $sqlcmd    = "update transaction set useraccount=useraccount - {$cash} where username ='A'";
+  $affected_rows = $dbh->exec($sqlcmd);
+  if ($affected_rows > 0) {
+    echo "用户A账户扣除成功" . "<br>";
+  } else {
+    throw new Exception("用户A账户扣除失败");
+  }
+  //用户B账户增加100
+  $affected_rows = $dbh->exec("update transaction set useraccount=useraccount+{$cash} where username ='B'");
+  if ($affected_rows > 0) {
+    echo "用户B账户增加成功" . "<br>";
+  } else {
+    throw new Exception("用户B账户增加失败");
+  }
+  echo "转账成功";
+  //若前面两个步骤都成功，则提交事务
+  $dbh->commit();
+}
+catch (PDOException $e) //若前面两个步骤中出现了异常，则回滚
+  {
+  echo $e->getMessage();
+  $dbh->rollback();
+}
+//对事物的使用结束之后，重新开启自动提交
+$dbh->setAttribute(PDO::ATTR_AUTOCOMMIT, 1);
+?>
